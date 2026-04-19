@@ -172,7 +172,7 @@ export function rowsForTimeScope(
   }
 }
 
-function resolveDisplayList(
+export function resolveDisplayList(
   rows: ProcessedTransaction[],
   queries: string[],
 ): { matches: string[] } | { error: string } {
@@ -185,7 +185,7 @@ function resolveDisplayList(
   return { matches };
 }
 
-function resolveSubCategoryList(
+export function resolveSubCategoryList(
   allRowsForLookup: ProcessedTransaction[],
   queries: string[],
 ): { matches: string[] } | { error: string } {
@@ -391,10 +391,19 @@ export function buildExpenseChartAggregation(
   baseFilters: FinanceFilters,
   dashboardFiltered: ProcessedTransaction[],
   timeScope: TimeScopeArg,
-  options: { groupBy: ExpenseChartGroupBy; topN: number },
+  options: {
+    groupBy: ExpenseChartGroupBy;
+    topN: number;
+    /** OR-match: only include these display categories (fuzzy-resolved). */
+    displayCategories?: string[];
+    /** OR-match: only include these sub-categories (fuzzy-resolved). */
+    subCategories?: string[];
+  },
 ): {
   segments: { name: string; value: number }[];
   totalExpense: number;
+  /** Display categories actually applied (resolved names). */
+  appliedCategoryFilter?: string[];
 } {
   let rows = rowsForTimeScope(
     processed,
@@ -405,6 +414,25 @@ export function buildExpenseChartAggregation(
   rows = rows.filter(
     (t) => t.direction === "expense" && countsForCashflow(t),
   );
+
+  let appliedCategoryFilter: string[] | undefined;
+
+  if (options.displayCategories?.length) {
+    const res = resolveDisplayList(processed, options.displayCategories);
+    if (!("error" in res)) {
+      const set = new Set(res.matches.map((x) => norm(x)));
+      rows = rows.filter((t) => set.has(norm(t.displayCategory)));
+      appliedCategoryFilter = res.matches;
+    }
+  }
+
+  if (options.subCategories?.length) {
+    const res = resolveSubCategoryList(processed, options.subCategories);
+    if (!("error" in res)) {
+      const set = new Set(res.matches.map((x) => norm(x)));
+      rows = rows.filter((t) => set.has(norm(t.subCategory)));
+    }
+  }
 
   const map = new Map<string, number>();
   for (const t of rows) {
@@ -430,5 +458,183 @@ export function buildExpenseChartAggregation(
   const rest = arr.slice(topN - 1);
   const otherVal = rest.reduce((s, x) => s + x.value, 0);
   const segments = [...head, { name: "Other", value: otherVal }];
-  return { segments, totalExpense };
+  return { segments, totalExpense, appliedCategoryFilter };
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Trend / time-series charts
+───────────────────────────────────────────────────────────────────── */
+
+const CAL_MONTHS_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+] as const;
+
+function shortMonthLabel(year: number, month: number) {
+  return `${CAL_MONTHS_SHORT[month - 1]} ${year}`;
+}
+
+export type TrendSeriesBy = "total" | "display_category";
+export type TrendDirection = "expense" | "income" | "both";
+
+export type TrendChartResult = {
+  data: Record<string, string | number>[];
+  series: { key: string; name: string }[];
+  /** Total amount across all rows (expense + income for "both"). */
+  totalAmount: number;
+  appliedCategoryFilter?: string[];
+};
+
+/**
+ * Build a monthly time-series for line / bar / cashflow charts.
+ *
+ * `seriesBy`:
+ *  - "total"            → single series (or income+expense for direction="both")
+ *  - "display_category" → one series per top-N category (expenses)
+ *
+ * Always groups by calendar month regardless of timeScope mode.
+ */
+export function buildTrendChartData(
+  processed: ProcessedTransaction[],
+  baseFilters: FinanceFilters,
+  dashboardFiltered: ProcessedTransaction[],
+  timeScope: TimeScopeArg,
+  options: {
+    direction: TrendDirection;
+    seriesBy: TrendSeriesBy;
+    displayCategories?: string[];
+    subCategories?: string[];
+    maxSeries?: number;
+  },
+): TrendChartResult | { error: string } {
+  let rows = rowsForTimeScope(processed, baseFilters, dashboardFiltered, timeScope);
+  rows = rows.filter((t) => countsForCashflow(t));
+
+  let appliedCategoryFilter: string[] | undefined;
+
+  // Apply optional category filters
+  if (options.displayCategories?.length) {
+    const res = resolveDisplayList(processed, options.displayCategories);
+    if ("error" in res) return { error: res.error };
+    const set = new Set(res.matches.map((x) => norm(x)));
+    rows = rows.filter((t) => set.has(norm(t.displayCategory)));
+    appliedCategoryFilter = res.matches;
+  }
+  if (options.subCategories?.length) {
+    const res = resolveSubCategoryList(processed, options.subCategories);
+    if ("error" in res) return { error: res.error };
+    const set = new Set(res.matches.map((x) => norm(x)));
+    rows = rows.filter((t) => set.has(norm(t.subCategory)));
+  }
+
+  // Filter direction
+  if (options.direction !== "both") {
+    rows = rows.filter((t) => t.direction === options.direction);
+  }
+
+  if (rows.length === 0) {
+    return {
+      data: [],
+      series: [],
+      totalAmount: 0,
+      appliedCategoryFilter,
+    };
+  }
+
+  // Collect sorted months
+  const monthKeys = new Map<string, { year: number; month: number }>();
+  for (const t of rows) {
+    const k = `${t.year}-${String(t.month).padStart(2, "0")}`;
+    if (!monthKeys.has(k)) monthKeys.set(k, { year: t.year, month: t.month });
+  }
+  const sortedMonthKeys = [...monthKeys.entries()]
+    .sort((a, b) => periodMonthIndex(a[1].year, a[1].month) - periodMonthIndex(b[1].year, b[1].month))
+    .map(([k]) => k);
+
+  // ── cashflow / "both" direction ──────────────────────────────────
+  if (options.direction === "both") {
+    const data = sortedMonthKeys.map((mk) => {
+      const { year, month } = monthKeys.get(mk)!;
+      const monthRows = rows.filter((t) => t.year === year && t.month === month);
+      const income = monthRows
+        .filter((t) => t.direction === "income")
+        .reduce((s, t) => s + t.amount, 0);
+      const expense = monthRows
+        .filter((t) => t.direction === "expense")
+        .reduce((s, t) => s + t.amount, 0);
+      return {
+        label: shortMonthLabel(year, month),
+        income,
+        expense,
+        net: income - expense,
+      };
+    });
+    const totalAmount = rows.reduce((s, t) => s + t.amount, 0);
+    return {
+      data,
+      series: [
+        { key: "income", name: "Income" },
+        { key: "expense", name: "Expenses" },
+        { key: "net", name: "Net" },
+      ],
+      totalAmount,
+      appliedCategoryFilter,
+    };
+  }
+
+  // ── single total series ──────────────────────────────────────────
+  if (options.seriesBy === "total") {
+    const data = sortedMonthKeys.map((mk) => {
+      const { year, month } = monthKeys.get(mk)!;
+      const monthRows = rows.filter((t) => t.year === year && t.month === month);
+      return {
+        label: shortMonthLabel(year, month),
+        amount: monthRows.reduce((s, t) => s + t.amount, 0),
+      };
+    });
+    const totalAmount = rows.reduce((s, t) => s + t.amount, 0);
+    const seriesName =
+      options.direction === "expense" ? "Expenses" : "Income";
+    return {
+      data,
+      series: [{ key: "amount", name: seriesName }],
+      totalAmount,
+      appliedCategoryFilter,
+    };
+  }
+
+  // ── multi-category series (display_category) ─────────────────────
+  const maxSeries = Math.min(10, Math.max(2, options.maxSeries ?? 8));
+
+  // Rank categories by total
+  const catTotals = new Map<string, number>();
+  for (const t of rows) {
+    catTotals.set(t.displayCategory, (catTotals.get(t.displayCategory) ?? 0) + t.amount);
+  }
+  const topCats = [...catTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxSeries)
+    .map(([cat]) => cat);
+
+  const data = sortedMonthKeys.map((mk) => {
+    const { year, month } = monthKeys.get(mk)!;
+    const monthRows = rows.filter((t) => t.year === year && t.month === month);
+    const point: Record<string, string | number> = {
+      label: shortMonthLabel(year, month),
+    };
+    for (const cat of topCats) {
+      point[cat] = monthRows
+        .filter((t) => t.displayCategory === cat)
+        .reduce((s, t) => s + t.amount, 0);
+    }
+    return point;
+  });
+
+  const totalAmount = rows.reduce((s, t) => s + t.amount, 0);
+  return {
+    data,
+    series: topCats.map((cat) => ({ key: cat, name: cat })),
+    totalAmount,
+    appliedCategoryFilter,
+  };
 }

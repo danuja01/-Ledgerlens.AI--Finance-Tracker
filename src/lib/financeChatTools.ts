@@ -2,12 +2,17 @@ import { countsForCashflow } from "@/lib/finance";
 import type { Analytics, FinanceFilters, ProcessedTransaction } from "@/types";
 import {
   buildExpenseChartAggregation,
+  buildTrendChartData,
   describeTimeScope,
   queryLedger,
+  resolveDisplayList,
+  resolveSubCategoryList,
   subcategoryRollupForScope,
   type ExpenseChartGroupBy,
   type LedgerDimensions,
   type TimeScopeArg,
+  type TrendDirection,
+  type TrendSeriesBy,
 } from "@/lib/ledgerQueryEngine";
 
 const MONTHS = [
@@ -176,33 +181,97 @@ export const FINANCE_TOOLS: unknown[] = [
     function: {
       name: "build_expense_chart",
       description:
-        "Prepare data for an **inline expense chart** (pie or bar) in the chat UI. Call this when the user asks to visualize, chart, graph, or see a breakdown of spending (e.g. pie chart Jan–Apr 2026). Use the same timeScope rules as query_ledger. Returns segment totals for the assistant to summarize; the app renders the chart automatically.",
+        "Legacy: use build_chart instead. Kept for backward compatibility — generates a breakdown pie/bar chart.",
       parameters: {
         type: "object",
         properties: {
           timeScope: TIME_SCOPE_SCHEMA,
+          groupBy: { type: "string", enum: ["display_category", "subcategory"] },
+          displayCategories: { type: "array", items: { type: "string" } },
+          subCategories: { type: "array", items: { type: "string" } },
+          chartKind: { type: "string", enum: ["pie", "bar", "auto"] },
+          topN: { type: "number" },
+          title: { type: "string" },
+        },
+        required: ["timeScope"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "build_chart",
+      description:
+        "Generate any inline chart widget in the chat. Choose chartType based on what the user wants:\n" +
+        "• 'breakdown' — pie or horizontal bar showing distribution of spending across categories/sub-categories in a period.\n" +
+        "• 'trend' — line or vertical bar chart showing how spending (or income) changes month by month.\n" +
+        "• 'cashflow' — grouped bar showing income vs expenses each month, with a net line.\n\n" +
+        "ALWAYS carry over the exact context filters (timeScope, displayCategories, subCategories) from prior turns. " +
+        "Never widen the scope beyond what the user asked.",
+      parameters: {
+        type: "object",
+        properties: {
+          chartType: {
+            type: "string",
+            enum: ["breakdown", "trend", "cashflow"],
+            description:
+              "breakdown = pie/bar distribution; trend = month-by-month line/bar; cashflow = income vs expense over time.",
+          },
+          timeScope: TIME_SCOPE_SCHEMA,
+          displayCategories: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Scope the chart to these display category names (OR logic). Copy from context if previous query used a category filter.",
+          },
+          subCategories: {
+            type: "array",
+            items: { type: "string" },
+            description: "Further restrict to these sub-categories (OR logic).",
+          },
+          // ── breakdown params ──
           groupBy: {
             type: "string",
             enum: ["display_category", "subcategory"],
             description:
-              "display_category = one slice per main category; subcategory = finer slices (Category › Sub).",
-          },
-          chartKind: {
-            type: "string",
-            enum: ["pie", "bar", "auto"],
-            description:
-              "auto = pie if not too many segments, else horizontal bar. Prefer pie when user asks for pie chart.",
+              "breakdown only. display_category = one slice per main category; subcategory = one slice per sub-category. Use subcategory when already scoped to one category.",
           },
           topN: {
             type: "number",
-            description: "Max segments before merging rest into Other (default 12, max 25)",
+            description:
+              "breakdown only. Max segments before collapsing rest into 'Other' (default 12, max 25).",
           },
+          chartKind: {
+            type: "string",
+            enum: ["pie", "bar", "line", "trend_bar", "auto"],
+            description:
+              "Chart render style. auto = sensible default for chartType. pie/bar for breakdown; line/trend_bar for trend.",
+          },
+          // ── trend params ──
+          direction: {
+            type: "string",
+            enum: ["expense", "income", "both"],
+            description:
+              "trend only. expense = spending trend; income = income trend; both = show both series on same chart. Default expense.",
+          },
+          seriesBy: {
+            type: "string",
+            enum: ["total", "display_category"],
+            description:
+              "trend only. total = one line for overall amount; display_category = one line per top category (multi-series). Use display_category for 'compare categories over time'.",
+          },
+          maxSeries: {
+            type: "number",
+            description:
+              "trend seriesBy=display_category only. Max category lines (default 6, max 10).",
+          },
+          // ── shared ──
           title: {
             type: "string",
-            description: "Short chart title, e.g. Expenses by category (Jan–Apr 2026)",
+            description: "Chart title shown to the user.",
           },
         },
-        required: ["timeScope"],
+        required: ["chartType", "timeScope"],
       },
     },
   },
@@ -387,17 +456,34 @@ export function executeFinanceTool(
       const groupBy = (args.groupBy === "subcategory"
         ? "subcategory"
         : "display_category") as ExpenseChartGroupBy;
-      const topN = Math.min(
-        25,
-        Math.max(3, Number(args.topN) || 12),
-      );
-      const { segments, totalExpense } = buildExpenseChartAggregation(
-        ctx.processed,
-        ctx.filters,
-        ctx.filtered,
-        ts,
-        { groupBy, topN },
-      );
+      const topN = Math.min(25, Math.max(3, Number(args.topN) || 12));
+
+      // Category filters — resolve with fuzzy matching
+      const rawDisplayCats = Array.isArray(args.displayCategories)
+        ? args.displayCategories.map((x) => String(x))
+        : undefined;
+      const rawSubCats = Array.isArray(args.subCategories)
+        ? args.subCategories.map((x) => String(x))
+        : undefined;
+
+      // Validate up front so we can surface clear errors
+      if (rawDisplayCats?.length) {
+        const check = resolveDisplayList(ctx.processed, rawDisplayCats);
+        if ("error" in check) return { error: check.error };
+      }
+      if (rawSubCats?.length) {
+        const check = resolveSubCategoryList(ctx.processed, rawSubCats);
+        if ("error" in check) return { error: check.error };
+      }
+
+      const { segments, totalExpense, appliedCategoryFilter } =
+        buildExpenseChartAggregation(ctx.processed, ctx.filters, ctx.filtered, ts, {
+          groupBy,
+          topN,
+          displayCategories: rawDisplayCats,
+          subCategories: rawSubCats,
+        });
+
       const chartKindArg = String(args.chartKind ?? "auto");
       const chartKind =
         chartKindArg === "pie"
@@ -407,9 +493,19 @@ export function executeFinanceTool(
             : segments.length <= 14
               ? "pie"
               : "bar";
+
       const periodLabel = describeTimeScope(ts, ctx.filters);
-      const defaultTitle =
-        groupBy === "display_category"
+      const catLabel =
+        appliedCategoryFilter?.length
+          ? appliedCategoryFilter.join(" + ")
+          : rawDisplayCats?.length
+            ? rawDisplayCats.join(" + ")
+            : null;
+      const defaultTitle = catLabel
+        ? groupBy === "subcategory"
+          ? `${catLabel} — by sub-category`
+          : `${catLabel} — by category`
+        : groupBy === "display_category"
           ? "Expenses by category"
           : "Expenses by sub-category";
       const title =
@@ -425,7 +521,186 @@ export function executeFinanceTool(
         segments,
         totalExpense,
         segmentCount: segments.length,
+        appliedCategoryFilter: appliedCategoryFilter ?? null,
         hint: "Summarize these figures in your reply; the user also sees an interactive chart in the chat.",
+      };
+    }
+    case "build_chart": {
+      const ts = parseTimeScope(args.timeScope);
+      if ("error" in ts) return { error: ts.error };
+
+      const chartType = String(args.chartType ?? "breakdown") as
+        | "breakdown"
+        | "trend"
+        | "cashflow";
+
+      const rawDisplayCats = Array.isArray(args.displayCategories)
+        ? (args.displayCategories as unknown[]).map((x) => String(x))
+        : undefined;
+      const rawSubCats = Array.isArray(args.subCategories)
+        ? (args.subCategories as unknown[]).map((x) => String(x))
+        : undefined;
+
+      // ── breakdown ──────────────────────────────────────────────
+      if (chartType === "breakdown") {
+        const groupBy = (
+          args.groupBy === "subcategory" ? "subcategory" : "display_category"
+        ) as ExpenseChartGroupBy;
+        const topN = Math.min(25, Math.max(3, Number(args.topN) || 12));
+
+        if (rawDisplayCats?.length) {
+          const check = resolveDisplayList(ctx.processed, rawDisplayCats);
+          if ("error" in check) return { error: check.error };
+        }
+        if (rawSubCats?.length) {
+          const check = resolveSubCategoryList(ctx.processed, rawSubCats);
+          if ("error" in check) return { error: check.error };
+        }
+
+        const { segments, totalExpense, appliedCategoryFilter } =
+          buildExpenseChartAggregation(
+            ctx.processed,
+            ctx.filters,
+            ctx.filtered,
+            ts,
+            { groupBy, topN, displayCategories: rawDisplayCats, subCategories: rawSubCats },
+          );
+
+        const chartKindArg = String(args.chartKind ?? "auto");
+        const chartKind =
+          chartKindArg === "pie"
+            ? "pie"
+            : chartKindArg === "bar"
+              ? "bar"
+              : segments.length <= 14
+                ? "pie"
+                : "bar";
+
+        const periodLabel = describeTimeScope(ts, ctx.filters);
+        const catLabel = appliedCategoryFilter?.length
+          ? appliedCategoryFilter.join(" + ")
+          : rawDisplayCats?.length
+            ? rawDisplayCats.join(" + ")
+            : null;
+        const defaultTitle = catLabel
+          ? groupBy === "subcategory"
+            ? `${catLabel} — by sub-category`
+            : `${catLabel} — by category`
+          : groupBy === "display_category"
+            ? "Expenses by category"
+            : "Expenses by sub-category";
+        const title =
+          typeof args.title === "string" && args.title.trim()
+            ? args.title.trim()
+            : defaultTitle;
+        return {
+          _widget: "expense_chart",
+          title,
+          subtitle: `${periodLabel} · Total ${Math.round(totalExpense).toLocaleString()} LKR`,
+          chartKind,
+          currency: "LKR",
+          segments,
+          totalExpense,
+          segmentCount: segments.length,
+          appliedCategoryFilter: appliedCategoryFilter ?? null,
+          hint: "An interactive chart is shown in the chat. Summarize the key numbers.",
+        };
+      }
+
+      // ── trend or cashflow ──────────────────────────────────────
+      const direction: TrendDirection =
+        chartType === "cashflow"
+          ? "both"
+          : (["expense", "income", "both"].includes(String(args.direction))
+              ? (args.direction as TrendDirection)
+              : "expense");
+
+      const seriesBy: TrendSeriesBy =
+        chartType === "cashflow"
+          ? "total"
+          : args.seriesBy === "display_category"
+            ? "display_category"
+            : "total";
+
+      const maxSeries = Math.min(10, Math.max(2, Number(args.maxSeries) || 6));
+
+      const result = buildTrendChartData(
+        ctx.processed,
+        ctx.filters,
+        ctx.filtered,
+        ts,
+        {
+          direction,
+          seriesBy,
+          displayCategories: rawDisplayCats,
+          subCategories: rawSubCats,
+          maxSeries,
+        },
+      );
+      if ("error" in result) return { error: result.error };
+
+      if (result.data.length === 0) {
+        return { error: "No data found for the specified period and filters." };
+      }
+
+      const periodLabel = describeTimeScope(ts, ctx.filters);
+      const catLabel =
+        result.appliedCategoryFilter?.length
+          ? result.appliedCategoryFilter.join(" + ")
+          : rawDisplayCats?.length
+            ? rawDisplayCats.join(" + ")
+            : null;
+
+      let defaultTitle: string;
+      if (chartType === "cashflow") {
+        defaultTitle = catLabel
+          ? `Cashflow — ${catLabel}`
+          : "Monthly cashflow (income vs expenses)";
+      } else if (direction === "income") {
+        defaultTitle = catLabel ? `Income trend — ${catLabel}` : "Income over time";
+      } else {
+        defaultTitle = catLabel
+          ? `Spending trend — ${catLabel}`
+          : seriesBy === "display_category"
+            ? "Spending by category over time"
+            : "Spending over time";
+      }
+      const title =
+        typeof args.title === "string" && args.title.trim()
+          ? args.title.trim()
+          : defaultTitle;
+
+      // Determine chart kind
+      let chartKind: string;
+      if (chartType === "cashflow") {
+        chartKind = "cashflow";
+      } else if (args.chartKind === "trend_bar") {
+        chartKind = "trend_bar";
+      } else if (args.chartKind === "line") {
+        chartKind = "line";
+      } else {
+        // auto: line for multi-series, trend_bar for single series ≤12 months
+        chartKind =
+          result.series.length > 1
+            ? "line"
+            : result.data.length <= 12
+              ? "trend_bar"
+              : "line";
+      }
+
+      const widget = chartType === "cashflow" ? "cashflow_chart" : "trend_chart";
+
+      return {
+        _widget: widget,
+        title,
+        subtitle: `${periodLabel}${catLabel ? ` · ${catLabel}` : ""} · Total ${Math.round(result.totalAmount).toLocaleString()} LKR`,
+        chartKind,
+        currency: "LKR",
+        data: result.data,
+        series: result.series,
+        totalAmount: result.totalAmount,
+        appliedCategoryFilter: result.appliedCategoryFilter ?? null,
+        hint: "An interactive chart is shown in the chat. Summarize the highlights.",
       };
     }
     default:

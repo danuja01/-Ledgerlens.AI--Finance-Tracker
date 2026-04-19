@@ -7,8 +7,8 @@ export function getOpenAiApiKey(): string | undefined {
   return k || undefined;
 }
 
-/** Inline chart widget (pie / bar) attached to an assistant message — similar to rich widgets in Claude/ChatGPT. */
-export type ChatChartSpec = {
+/** Breakdown chart (pie or horizontal bar) — one value per segment. */
+export type ChatChartBreakdownSpec = {
   id: string;
   kind: "pie" | "bar";
   title: string;
@@ -16,6 +16,21 @@ export type ChatChartSpec = {
   currency: string;
   data: { name: string; value: number }[];
 };
+
+/** Multi-series time-series chart — one row per calendar month. */
+export type ChatChartTrendSpec = {
+  id: string;
+  /** line = line chart per series; trend_bar = grouped vertical bars; cashflow = income+expense+net bars */
+  kind: "line" | "trend_bar" | "cashflow";
+  title: string;
+  subtitle?: string;
+  currency: string;
+  /** Recharts-compatible data: each entry is one time point; keys = "label" + series keys. */
+  data: Record<string, string | number>[];
+  series: { key: string; name: string; color?: string }[];
+};
+
+export type ChatChartSpec = ChatChartBreakdownSpec | ChatChartTrendSpec;
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
