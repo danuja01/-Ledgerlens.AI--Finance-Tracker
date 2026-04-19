@@ -256,19 +256,19 @@ export function FinancialChat() {
   );
 
   const shellClass = fullscreen
-    ? "fixed inset-0 z-50 flex bg-slate-950/60 p-0 backdrop-blur-sm"
-    : "fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center";
+    ? "fixed inset-0 z-50 flex bg-slate-950/60 p-0 backdrop-blur-sm supports-[padding:env(safe-area-inset-bottom)]:pt-[env(safe-area-inset-top)]"
+    : "fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:p-4 sm:items-center";
 
   const panelClass = fullscreen
-    ? "relative z-10 flex h-full w-full max-w-none flex-col overflow-hidden bg-white shadow-2xl sm:flex-row"
-    : "relative z-10 flex max-h-[90vh] w-[min(100%,80vw)] min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl";
+    ? "relative z-10 flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col overflow-hidden bg-white shadow-2xl supports-[height:100dvh]:h-[100dvh] sm:h-full sm:max-h-none sm:flex-row"
+    : "relative z-10 flex max-h-[min(92dvh,100dvh)] min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-none rounded-t-3xl bg-white shadow-2xl sm:max-h-[90vh] sm:w-[min(100%,80vw)] sm:rounded-2xl";
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg ring-2 ring-white/20 transition hover:bg-slate-800 sm:bottom-8 sm:right-8"
+        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex h-14 w-14 min-h-[3.5rem] min-w-[3.5rem] touch-manipulation items-center justify-center rounded-full bg-slate-900 text-white shadow-lg ring-2 ring-white/20 transition active:bg-slate-800 sm:bottom-8 sm:right-8"
         aria-label="Open finance assistant"
       >
         <span className="text-2xl" aria-hidden>
@@ -330,7 +330,7 @@ export function FinancialChat() {
                     <span className="min-w-0 flex-1 truncate">{s.title}</span>
                     <button
                       type="button"
-                      className="shrink-0 rounded px-1 text-xs opacity-0 group-hover:opacity-100"
+                      className="min-h-8 min-w-8 shrink-0 touch-manipulation rounded px-1 text-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       onClick={(e) => deleteSession(s.id, e)}
                       aria-label="Delete session"
                     >
@@ -345,60 +345,96 @@ export function FinancialChat() {
             </aside>
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2 sm:px-4">
-                {fullscreen && (
-                  <button
-                    type="button"
-                    className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-700 sm:hidden"
-                    onClick={() => setSidebarOpen((o) => !o)}
-                  >
-                    {sidebarOpen ? "Hide list" : "Sessions"}
-                  </button>
-                )}
-                <div className="min-w-0 flex-1">
-                  <h2 id="chat-title" className="truncate font-semibold text-slate-900">
-                    LedgerLens assistant
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Tool calling · markdown · GPT-4o-mini ·{" "}
-                    {fullscreen ? "Full screen" : "Compact"}
-                  </p>
+              <div className="border-b border-slate-200 px-3 py-2 sm:px-4">
+                <div className="flex items-start gap-2">
+                  {fullscreen && (
+                    <button
+                      type="button"
+                      className="mt-0.5 min-h-11 shrink-0 touch-manipulation rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 sm:hidden"
+                      onClick={() => setSidebarOpen((o) => !o)}
+                    >
+                      {sidebarOpen ? "Hide" : "Chats"}
+                    </button>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h2
+                      id="chat-title"
+                      className="text-base font-semibold leading-tight text-slate-900 sm:text-lg"
+                    >
+                      LedgerLens assistant
+                    </h2>
+                    <p className="mt-0.5 text-[11px] leading-snug text-slate-500 sm:text-xs">
+                      Tools · charts · markdown · {fullscreen ? "Full screen" : "Compact"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                    <button
+                      type="button"
+                      className="min-h-11 touch-manipulation rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+                      onClick={() => setFullscreen((f) => !f)}
+                    >
+                      <span className="hidden sm:inline">
+                        {fullscreen ? "Exit full" : "Full screen"}
+                      </span>
+                      <span className="sm:hidden">{fullscreen ? "Exit" : "Expand"}</span>
+                    </button>
+                    {thread.length > 0 && (
+                      <button
+                        type="button"
+                        className="min-h-11 touch-manipulation rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-100 active:bg-slate-200"
+                        onClick={clearThread}
+                      >
+                        Clear
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="min-h-11 min-w-11 touch-manipulation rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 active:bg-slate-200"
+                      onClick={() => setOpen(false)}
+                      aria-label="Close chat"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
-                  onClick={() => setFullscreen((f) => !f)}
-                >
-                  {fullscreen ? "Exit full" : "Full screen"}
-                </button>
-                {thread.length > 0 && (
-                  <button
-                    type="button"
-                    className="rounded-lg px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
-                    onClick={clearThread}
-                  >
-                    Clear
-                  </button>
+                {!fullscreen && (
+                  <div className="mt-2 flex gap-2 sm:hidden">
+                    <label className="sr-only" htmlFor="ledger-chat-session">
+                      Conversation
+                    </label>
+                    <select
+                      id="ledger-chat-session"
+                      className="min-h-11 min-w-0 flex-1 touch-manipulation rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-900"
+                      value={activeId ?? ""}
+                      onChange={(e) => selectSession(e.target.value)}
+                    >
+                      {sortedSessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.title}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="min-h-11 shrink-0 touch-manipulation rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white active:bg-slate-800"
+                      onClick={newChat}
+                    >
+                      New
+                    </button>
+                  </div>
                 )}
-                <button
-                  type="button"
-                  className="rounded-lg px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
-                  onClick={() => setOpen(false)}
-                >
-                  Close
-                </button>
               </div>
 
               {!apiKey && (
-                <p className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+                <p className="border-b border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-900 sm:px-4">
                   Set <code className="rounded bg-amber-100/80 px-1">VITE_OPENAI_API_KEY</code> in{" "}
                   <code className="rounded bg-amber-100/80 px-1">.env</code> and restart the dev server.
                 </p>
               )}
 
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4">
                 {thread.length === 0 && !loading && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm leading-relaxed text-slate-600">
                     Ask about spending, income, trends, or <strong>charts</strong> (e.g. “expense pie chart
                     Jan–Apr 2026”). The assistant uses <strong>ledger tools</strong> so numbers and graphs
                     match your data. For periods in chat, name the range in your question or align dashboard
@@ -409,10 +445,10 @@ export function FinancialChat() {
                   <div key={i} className="space-y-2">
                     <div
                       className={cn(
-                        "rounded-2xl px-4 py-3",
+                        "rounded-2xl px-3 py-3 sm:px-4",
                         m.role === "user"
-                          ? "ml-6 bg-slate-100 text-slate-900"
-                          : "mr-4 border border-emerald-100/80 bg-emerald-50/50",
+                          ? "ml-2 bg-slate-100 text-slate-900 sm:ml-6"
+                          : "mr-2 border border-emerald-100/80 bg-emerald-50/50 sm:mr-4",
                       )}
                     >
                       {m.role === "user" ? (
@@ -425,7 +461,7 @@ export function FinancialChat() {
                     </div>
                     {m.role === "assistant" &&
                       m.charts?.map((c) => (
-                        <div key={c.id} className="mr-4">
+                        <div key={c.id} className="mr-2 sm:mr-4">
                           <ChatChartWidget spec={c} />
                         </div>
                       ))}
@@ -443,15 +479,15 @@ export function FinancialChat() {
               </div>
 
               <form
-                className="border-t border-slate-200 p-3 sm:p-4"
+                className="shrink-0 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 sm:pb-4"
                 onSubmit={(e) => {
                   e.preventDefault();
                   void send();
                 }}
               >
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
                   <textarea
-                    rows={fullscreen ? 2 : 2}
+                    rows={2}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -460,16 +496,18 @@ export function FinancialChat() {
                         void send();
                       }
                     }}
-                    placeholder="Ask about your finances… (Enter to send, Shift+Enter for new line)"
-                    className="min-h-[44px] min-w-0 flex-1 resize-y rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
+                    placeholder="Ask about your finances…"
+                    enterKeyHint="send"
+                    className="min-h-[48px] min-w-0 flex-1 resize-y rounded-xl border border-slate-200 px-3 py-3 text-base leading-snug text-slate-900 placeholder:text-slate-400 sm:min-h-[44px] sm:py-2 sm:text-sm"
                     disabled={loading}
                     autoComplete="off"
+                    autoCapitalize="sentences"
                   />
                   {loading ? (
                     <button
                       type="button"
                       onClick={stop}
-                      className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-800"
+                      className="min-h-12 w-full touch-manipulation rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 active:bg-rose-100 sm:min-h-11 sm:w-auto sm:py-2"
                     >
                       Stop
                     </button>
@@ -477,12 +515,15 @@ export function FinancialChat() {
                     <button
                       type="submit"
                       disabled={!input.trim()}
-                      className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+                      className="min-h-12 w-full touch-manipulation rounded-xl bg-slate-900 px-5 py-3 text-base font-medium text-white active:bg-slate-800 disabled:opacity-40 sm:min-h-11 sm:w-auto sm:py-2 sm:text-sm"
                     >
                       Send
                     </button>
                   )}
                 </div>
+                <p className="mt-2 hidden text-[10px] text-slate-400 sm:block">
+                  Enter to send · Shift+Enter for new line
+                </p>
               </form>
             </div>
           </div>

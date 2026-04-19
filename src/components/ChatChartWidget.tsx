@@ -40,16 +40,16 @@ export function ChatChartWidget({ spec }: Props) {
   const data = spec.data;
 
   return (
-    <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2">
-        <p className="text-sm font-semibold text-slate-900">{spec.title}</p>
+    <div className="mt-3 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-slate-50/80 px-3 py-2 sm:px-4">
+        <p className="text-sm font-semibold leading-snug text-slate-900">{spec.title}</p>
         {spec.subtitle && (
           <p className="text-xs text-slate-500">{spec.subtitle}</p>
         )}
       </div>
       <div className="p-2 sm:p-4">
         {spec.kind === "pie" ? (
-          <div className="h-[min(360px,55vh)] w-full min-h-[260px]">
+          <div className="h-[min(320px,50dvh)] w-full min-h-[220px] sm:min-h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -91,7 +91,7 @@ export function ChatChartWidget({ spec }: Props) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-[min(400px,60vh)] w-full min-h-[280px]">
+          <div className="h-[min(360px,55dvh)] w-full min-h-[240px] sm:min-h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
