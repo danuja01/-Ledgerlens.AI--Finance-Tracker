@@ -1,0 +1,618 @@
+{
+  "Balance": {
+    "displayName": "Balance",
+    "subCategories": {
+      "advance of annex": "Advance of annex"
+    }
+  },
+  "ComBank Malabe": {
+    "displayName": "ComBank Malabe",
+    "subCategories": {
+      "amma med": "Amma",
+      "amma": "Amma",
+      "ays lap repair": "Ays lap repair",
+      "balance the amounts with real accounts": "Balance the amounts with real accounts",
+      "for general expense": "Balance the amounts with real accounts",
+      "take back savings": "Balance the amounts with real accounts",
+      "transferred to expenses": "Balance the amounts with real accounts",
+      "clipper stg 2": "Clipper stg 2",
+      "dhabe": "Dhabe",
+      "foid": "Foid",
+      "ft": "Ft",
+      "iphone screen": "Iphone screen",
+      "iphone screen alibaba": "Iphone screen alibaba",
+      "loan": "Loan",
+      "rajitha akka for food": "Rajitha akka for food",
+      "silver chain": "Silver chain"
+    }
+  },
+  "ComBank Peradeniya": {
+    "displayName": "ComBank Peradeniya",
+    "subCategories": {
+      "amma": "Amma",
+      "amma med": "Amma med",
+      "ays lap repair": "Ays lap repair",
+      "clipper stg 2": "Clipper stg 2",
+      "foid": "Foid",
+      "for general expense": "For general expense",
+      "transferred to expenses": "For general expense",
+      "ft": "Ft",
+      "iphone screen": "Iphone screen",
+      "iphone screen alibaba": "Iphone screen alibaba",
+      "rajitha akka for food": "Rajitha akka for food",
+      "silver chain": "Silver chain"
+    }
+  },
+  "Correction": {
+    "displayName": "Correction",
+    "subCategories": {
+      "balance the amounts with real accounts": "Balance the amounts with real accounts"
+    }
+  },
+  "Gym": {
+    "displayName": "Gym",
+    "subCategories": {
+      "gym": "Gym"
+    }
+  },
+  "Hardware": {
+    "displayName": "Hardware",
+    "subCategories": {
+      "vijita rj45": "Vijita rj45"
+    }
+  },
+  "Loan": {
+    "displayName": "Loan",
+    "subCategories": {
+      "atte madi loan (after recovering)": "Atte madi loan (after recovering)",
+      "pubudu": "Pubudu"
+    }
+  },
+  "Modified Bal.": {
+    "displayName": "Modified Bal.",
+    "subCategories": {
+      "difference": "Difference"
+    }
+  },
+  "NTB": {
+    "displayName": "NTB",
+    "subCategories": {
+      "balance the amounts with real accounts": "Balance the amounts with real accounts",
+      "take back savings": "Balance the amounts with real accounts",
+      "dhabe": "Dhabe"
+    }
+  },
+  "Other": {
+    "displayName": "Other",
+    "subCategories": {
+      "a loan return from a friend": "A loan return from a friend",
+      "akka": "Akka",
+      "akka deposited": "Akka",
+      "akka gave": "Akka",
+      "amma": "Amma",
+      "ayya": "Ayya",
+      "binance": "Binance",
+      "maybe binance?": "Binance",
+      "crm deposite": "CRM deposite",
+      "check credit card payment": "Check credit card payment",
+      "dad": "Dad",
+      "deposit": "Deposit",
+      "fix balance error": "Fix balance error",
+      "lo food": "From Lochani",
+      "lo ielts": "From Lochani",
+      "loo cursor": "From Lochani",
+      "loo food": "From Lochani",
+      "loo foods": "From Lochani",
+      "loo gave": "From Lochani",
+      "loo gym": "From Lochani",
+      "loo mintpay": "From Lochani",
+      "taken from savings": "From Savings",
+      "from savings": "From Savings",
+      "taken from saving": "From Savings",
+      "taken out from saving": "From Savings",
+      "godaddy return": "Godaddy return",
+      "gym return": "Gym return",
+      "health insuarance return": "Health Insurance Return",
+      "house deposit refund": "House deposit refund",
+      "house rent dad": "House rent dad",
+      "income tax": "Income tax",
+      "interest": "Interest",
+      "naya": "Loan",
+      "naya dinuka": "Loan",
+      "pubudu": "Loan",
+      "loan chehan": "Loan chehan",
+      "loan handling fees": "Loan handling fees",
+      "loan maneesha": "Loan maneesha",
+      "loan pabaya": "Loan pabaya",
+      "naya pubudu": "Loan pubudu",
+      "loan thithira": "Loan thithira",
+      "lochani": "Lochani",
+      "transfer fees": "Money Transfer Fees",
+      "tramsfer charges": "Money Transfer Fees",
+      "transfer charges": "Money Transfer Fees",
+      "transfer fee": "Money Transfer Fees",
+      "withdraw fee": "Money Withdraw Fee",
+      "passport renew": "Passport renew",
+      "return apple": "Refund",
+      "ticket money return": "Refund",
+      "ticket sale": "Refund",
+      "🔴idk": "🔴idk",
+      "idk": "🔴idk",
+      "idk i cant remember": "🔴idk",
+      "🔴 idk": "🔴idk"
+    }
+  },
+  "Personal Loan": {
+    "displayName": "Personal Loan",
+    "subCategories": {
+      "loan": "Loan"
+    }
+  },
+  "WILL Return": {
+    "displayName": "WILL Return",
+    "subCategories": {
+      "gave a loan": "Loan",
+      "pubudu": "Loan pubudu"
+    }
+  },
+  "🌟 Investment": {
+    "displayName": "Investments",
+    "subCategories": {
+      "gold": "Gold"
+    }
+  },
+  "🍜 Food": {
+    "displayName": "Food & Groceries",
+    "subCategories": {
+      "ajith stores": "Ajith stores",
+      "aka food": "Aka food",
+      "farm": "Ambeywela Food Court",
+      "araliya nuwara eliya": "Araliya nuwara eliya",
+      "arpico": "Arpico",
+      "bakery": "Bakery",
+      "backes and cakes": "Bakery",
+      "bakes": "Bakery",
+      "barista": "Barista",
+      "barista kandy": "Barista",
+      "cafe brew": "Barista",
+      "cafe coffee": "Barista",
+      "coffee": "Barista",
+      "java lounge": "Barista",
+      "barn house": "Barn house",
+      "bird park": "Bird Park",
+      "bread shop": "Bread Shop",
+      "breadshop": "Bread Shop",
+      "breakfast 22nd": "Breakfast 22nd",
+      "bday cake": "Cake",
+      "cake": "Cake",
+      "ckake": "Cake",
+      "caravan fresh": "Caravan Fresh",
+      "caravan": "Caravan Fresh",
+      "cargills": "Cargills",
+      "cargills angunawala": "Cargills",
+      "cargils": "Cargills",
+      "foodcity": "Cargills",
+      "chai shop": "Chai shop",
+      "chicken": "Chicken",
+      "chiken": "Chicken",
+      "cinama": "Cinama",
+      "cocos": "Cocos",
+      "coffee at garden": "Coffee at garden",
+      "gaeden": "Coffee at garden",
+      "crepe runner": "Crepe runner",
+      "dasun bday": "Dasun bday",
+      "delight": "Delight",
+      "delight lunch": "Delight",
+      "desert and pepsi": "Desert and pepsi",
+      "dhanyas": "Dhanyas",
+      "dinemore": "Dinemore",
+      "fireplate": "Fireplate",
+      "food": "Food",
+      "foodlabd": "Foodland",
+      "gampola": "Gampola",
+      "garage cafe": "Garage cafe",
+      "glowmark": "Glowmark",
+      "glomark": "Glowmark",
+      "herali food xourt": "Herali food court",
+      "highway interchange": "Highway interchange",
+      "kcc": "KCC Worldspice",
+      "kcc worldspice": "KCC Worldspice",
+      "world spice": "KCC Worldspice",
+      "worldspice": "KCC Worldspice",
+      "bake house kandy": "Kandy Bake House",
+      "bakehouse": "Kandy Bake House",
+      "kandy bake house": "Kandy Bake House",
+      "kanrin bakers": "Kanrin bakers",
+      "keells": "Keells",
+      "kells": "Keells",
+      "general goods": "Keells",
+      "kella": "Keells",
+      "kells bread": "Keells",
+      "kfc": "Kfc",
+      "kurumbankz": "Kurumbankz",
+      "lemmongrass": "Lemmongrass",
+      "mahajana": "Mahajana",
+      "mahajana super": "Mahajana",
+      "marabedda": "Marabedda",
+      "milo 2": "Milo 2",
+      "mongolian": "Mongolian",
+      "noodles and tea": "Noodles and tea",
+      "isuru ayya": "Office",
+      "lunch": "Office",
+      "lunch 22nd": "Office",
+      "office": "Office",
+      "suba akka tuesday": "Office",
+      "nalinda ayya pearson": "Office Lunch",
+      "pearson lunch": "Office Lunch",
+      "nalinda ayya": "Office Lunch",
+      "pearson": "Office Lunch",
+      "open rice": "Open rice",
+      "p and s": "P&S",
+      "p nd s": "P&S",
+      "p&s": "P&S",
+      "pabaya": "Pabaya",
+      "pattipola": "Pattipola",
+      "pera rest house dinner": "Pera Rest house dinner",
+      "pizza hut": "Pizza hut",
+      "pr wedding onthe way street hut": "Pr wedding onthe way street hut",
+      "prasanna": "Prasanna",
+      "rio ice": "Rio ice",
+      "ronals": "Ronals",
+      "sen saal": "SenSaal",
+      "sensu": "Sensu",
+      "spar": "Spar",
+      "street hut": "Street hut",
+      "susiki": "Susiki",
+      "tea avenue": "Tea avenue",
+      "tee": "Tee",
+      "tophot": "Tophot",
+      "uber": "Uber eats",
+      "uber dinner": "Uber eats",
+      "uber eats": "Uber eats",
+      "victoria resort date": "Victoria resort date",
+      "vito": "Vito",
+      "vito pizza home": "Vito",
+      "‘satche": "‘Satche",
+      "maybe foods": "Maybe foods",
+      "hill tips tree idk": "Maybe foods",
+      "maybe asiri hospital": "Maybe foods",
+      "maybe date": "Maybe foods"
+    }
+  },
+  "🎁 Donation": {
+    "displayName": "Donations",
+    "subCategories": {
+      "amma friend dhane": "Amma friend Dhane",
+      "cancer": "Cancer",
+      "dhane": "Dhane",
+      "flood fund": "Flood fund"
+    }
+  },
+  "🎁 Gift": {
+    "displayName": "Gifts",
+    "subCategories": {
+      "rylie bday": "Rylie bday"
+    }
+  },
+  "🏠 House Rent": {
+    "displayName": "House Rent",
+    "subCategories": {
+      "house rent": "House Rent"
+    }
+  },
+  "🏥 Health": {
+    "displayName": "Health & Wellness",
+    "subCategories": {
+      "asiri opd": "Asiri OPD",
+      "channel": "Channel",
+      "ldl": "Ldl ,  Tsh Tests",
+      "tsh tests": "Ldl ,  Tsh Tests",
+      "loch blood": "Lochani",
+      "loch med": "Lochani",
+      "med": "Medication",
+      "meds": "Medication",
+      "pharmacy": "Pharmacy"
+    }
+  },
+  "🏥 health Insuarance claim": {
+    "displayName": "🏥 health Insuarance claim",
+    "subCategories": {
+      "specs": "Specs"
+    }
+  },
+  "🏦 Loan": {
+    "displayName": "Loans",
+    "subCategories": {
+      "difference": "Difference"
+    }
+  },
+  "👩‍❤️‍👨 Parents": {
+    "displayName": "Family Support",
+    "subCategories": {
+      "gold": "Amma",
+      "perahera": "Amma",
+      "sriyani saree amma": "Amma",
+      "the landy stores": "Amma",
+      "amma": "Amma",
+      "amma blouse": "Amma",
+      "amma charity work": "Amma",
+      "amma medicine": "Amma",
+      "amma specs": "Amma",
+      "amma withdraw": "Amma",
+      "a photocopy shop": "Amma",
+      "doc dada": "Dad",
+      "dont know why": "Dad",
+      "monitor 17/19": "Dad"
+    }
+  },
+  "👬🏻 Social Life": {
+    "displayName": "Social & Lifestyle",
+    "subCategories": {
+      "adventure": "Ambuluwawa",
+      "adventure park ambuluwawa": "Ambuluwawa",
+      "ambuluwawa entrance": "Ambuluwawa",
+      "badminton": "Badminton",
+      "bird park game": "Bird Park",
+      "birdpark": "Bird Park",
+      "carting": "Carting",
+      "day out marabedda": "Day out marabedda",
+      "dayout arangala": "Dayout arangala",
+      "farewell party": "Farewell party",
+      "flora": "Flora",
+      "ft idc": "Ft idc",
+      "grad": "Grad",
+      "kcc gaming": "Kcc gaming",
+      "lense rent": "Lense rent",
+      "lochani photo": "Lochani photo",
+      "movie": "Movie",
+      "murshids wedding": "Murshids wedding",
+      "nuwaraeliya hotel date": "Nuwaraeliya hotel date",
+      "office trip": "Office",
+      "office trip uditha": "Office",
+      "office treat": "Office",
+      "pubudu": "Office",
+      "pr wedding od fuel": "Pr wedding od fuel",
+      "scuba dive advance": "Scuba dive advance",
+      "splash bay": "Splash Bay",
+      "splashbay shoot": "Splash Bay",
+      "transport trip": "Transport trip",
+      "trip pabaya": "Trip pabaya",
+      "trip prashan going away": "Trip prashan going away",
+      "worldplay": "Worldplay"
+    }
+  },
+  "💄 Beauty": {
+    "displayName": "Beauty & Care",
+    "subCategories": {
+      "hair": "Hair",
+      "loch cosnetuca": "Loch cosnetuca",
+      "perfume": "Perfume",
+      "roo cosmetics": "Roo cosmetics",
+      "saloon": "Saloon",
+      "silver chain": "Silver chain",
+      "cosmetic maybe": "Cosmetic maybe"
+    }
+  },
+  "💰 Salary": {
+    "displayName": "Salary",
+    "subCategories": {
+      "sal and bonus": "Salary",
+      "salary": "Salary"
+    }
+  },
+  "💰Cash Withdraw": {
+    "displayName": "Cash Withdrawals",
+    "subCategories": {
+      "atm": "ATM Withdrawal",
+      "boc kandy": "ATM Withdrawal",
+      "hnb atm": "ATM Withdrawal",
+      "malabe": "ATM Withdrawal",
+      "peoples bak": "ATM Withdrawal",
+      "amma": "Amma",
+      "maybe amma": "Amma",
+      "car": "Car",
+      "kcc": "Kcc",
+      "ogf": "Ogf",
+      "scuba trip": "Scuba trip"
+    }
+  },
+  "💳 Credit Card Debt": {
+    "displayName": "💳 Credit Card Debt",
+    "subCategories": {
+      "credit card hsbc": "HSBC Credit Card",
+      "hsbc credit card settlement": "HSBC Credit Card",
+      "sampath credit card settlement": "Sampath Credit Card settlement"
+    }
+  },
+  "💸 Freelance": {
+    "displayName": "Freelance Income",
+    "subCategories": {
+      "clipper inv 4": "Clipper",
+      "clipper invoice 3 half": "Clipper",
+      "clipper stage 1 payment": "Clipper",
+      "clipper stg2": "Clipper",
+      "jobshop": "Jobshop"
+    }
+  },
+  "💸 binance": {
+    "displayName": "💸 binance",
+    "subCategories": {
+      "binance": "Binance"
+    }
+  },
+  "💾 Subscriptions": {
+    "displayName": "Subscriptions",
+    "subCategories": {
+      "apple": "Apple",
+      "cursor": "Cursor",
+      "google one": "Google One",
+      "spotify": "Spotify"
+    }
+  },
+  "📈 TAX": {
+    "displayName": "Taxes",
+    "subCategories": {
+      "income tax": "Income tax",
+      "interest": "Interest"
+    }
+  },
+  "📍 Co Work": {
+    "displayName": "Co-working",
+    "subCategories": {
+      "arcade": "Arcade",
+      "co work": "Co work"
+    }
+  },
+  "📙 Education": {
+    "displayName": "Education",
+    "subCategories": {
+      "ielts": "Ielts",
+      "wealthy minds stock acadamy": "Wealthy minds stock acadamy",
+      "zuu": "Zuu"
+    }
+  },
+  "🚖 Transport": {
+    "displayName": "Transport",
+    "subCategories": {
+      "fuel": "Fuel",
+      "ioc fuel": "Fuel",
+      "wrakapola ioc": "Fuel",
+      "highway": "Highway",
+      "hoghway": "Highway",
+      "highway interchange": "Highway",
+      "interchange": "Highway",
+      "kaduwela intervhange": "Highway",
+      "parking": "Parking",
+      "car parking": "Parking",
+      "police fine": "Police fine",
+      "train": "Train",
+      "railway": "Train",
+      "train booking": "Train",
+      "pickme": "Uber",
+      "uber": "Uber"
+    }
+  },
+  "🚗  Vehicle Maintain": {
+    "displayName": "🚗  Vehicle Maintain",
+    "subCategories": {
+      "break install": "Brakes",
+      "break pad": "Brakes",
+      "car battery": "Car Battery",
+      "car battery reset": "Car Battery",
+      "car light and tint": "Car light and tint",
+      "car shocks and rackends": "Car shocks and rackends",
+      "care point": "Care point",
+      "garage": "Garage",
+      "licen renew": "Licen renew",
+      "new wheel hub": "New Wheel hub",
+      "service": "Service",
+      "wash": "Wash",
+      "wheel alignment": "Wheel alignment",
+      "interior cleanup": "interior cleanup"
+    }
+  },
+  "🛒 Tech Goods": {
+    "displayName": "Tech & Devices",
+    "subCategories": {
+      "apple cable and camera protector": "Apple cable and camera protector",
+      "back cover for phone": "Back cover for phone",
+      "cameralk chip": "Cameralk chip",
+      "dialog router": "Dialog Router",
+      "electronics": "Electronics",
+      "idk opal": "Idk opal",
+      "iphone cable": "Iphone cable",
+      "life mobile": "Life mobile",
+      "mobile phone": "Mobile phone",
+      "sony headset": "Sony headset"
+    }
+  },
+  "🤑 Allowance": {
+    "displayName": "Allowance",
+    "subCategories": {
+      "wfh allowance from office": "WFH Allowance from office"
+    }
+  },
+  "🧘🏼 Health": {
+    "displayName": "Health",
+    "subCategories": {
+      "asiri": "Asiri",
+      "hand": "Hand",
+      "medicine": "Medicine",
+      "pharmacy": "Pharmacy",
+      "raj": "Raj Pharmacy",
+      "raj pharmacy hand med": "Raj Pharmacy"
+    }
+  },
+  "🧥 Apparel": {
+    "displayName": "Apparel",
+    "subCategories": {
+      "coolplanet": "Coolplanet",
+      "sriyani": "Sriyani",
+      "tfs short": "Tfs short",
+      "twinkle swim suit": "Twinkle swim suit"
+    }
+  },
+  "🧾 Payments": {
+    "displayName": "Payments",
+    "subCategories": {
+      "bil": "Bil",
+      "cc iphone handling fee": "CC iphone handling fee",
+      "credit card": "Credit card",
+      "credit card cancellation fee": "Credit card cancellation fee",
+      "cursor": "Cursor",
+      "db renewal fee": "DB renewal fee",
+      "dad cr repair": "Dad cr repair",
+      "dialog": "Dialog",
+      "dialog bill": "Dialog",
+      "dialog 405": "Dialog",
+      "dialog reload": "Dialog",
+      "dialog router": "Dialog Router",
+      "elec bill": "Elec bill",
+      "fix mobile phone": "Fix mobile phone",
+      "frimi": "Frimi",
+      "frimi llm": "Frimi",
+      "frimi manus": "Frimi",
+      "go daddy domain": "GoDaddy",
+      "godaddy": "GoDaddy",
+      "google one": "Google One",
+      "hutch gps": "Hutch GPS",
+      "iphone cc": "Iphone CC",
+      "iphone repair advance": "Iphone repair advance",
+      "iphone repir": "Iphone repir",
+      "koko": "Koko Payment",
+      "koko jbl go 4": "Koko Payment",
+      "koko xm5": "Koko Payment",
+      "koko - airpods": "Koko Payment",
+      "koko airpods": "Koko Payment",
+      "lightroom": "Lightroom",
+      "loan": "Loan",
+      "manus": "Manus",
+      "mint": "Mint",
+      "mintpay": "Mintpay",
+      "mintpay ari": "Mintpay",
+      "mobite": "Mobitel",
+      "mobitel web bill": "Mobitel",
+      "national b": "National b",
+      "pabasara": "Pabasara",
+      "pubudu": "Pubudu",
+      "sl map prashan": "Sl Map Prashan",
+      "slt bill": "Slt bill",
+      "spotify": "Spotify",
+      "temperd and back cover": "Temperd and back cover",
+      "vehicle leasing": "Vehicle leasing",
+      "water bill": "Water bill",
+      "yogeshwary return": "Yogeshwary return"
+    }
+  },
+  "🪑 Household": {
+    "displayName": "Household",
+    "subCategories": {
+      "electricity": "Electricity",
+      "foods": "Foods",
+      "fridge advance": "Fridge advance",
+      "gas": "Gas",
+      "scale": "Scale",
+      "water bill": "Water Bill"
+    }
+  }
+}
