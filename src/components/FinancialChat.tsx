@@ -1,7 +1,11 @@
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { useFinance } from "@/context/FinanceContext";
-import { buildFinancialSnapshot, snapshotToJson } from "@/lib/buildChatContext";
 import { sliceThreadForContext } from "@/lib/chatContextWindow";
+import {
+  executeFinanceTool,
+  FINANCE_TOOLS,
+  formatLedgerFiltersSummary,
+} from "@/lib/financeChatTools";
 import {
   loadChatSessions,
   newSessionId,
@@ -11,9 +15,10 @@ import {
 } from "@/lib/chatSessions";
 import {
   getOpenAiApiKey,
-  streamChatCompletion,
+  type ChatApiMessage,
   type ChatMessage,
 } from "@/lib/openaiChat";
+import { runChatWithToolLoop } from "@/lib/openaiChatTools";
 import { cn } from "@/lib/utils";
 import {
   useCallback,
@@ -25,10 +30,7 @@ import {
 } from "react";
 import systemPromptBase from "@/prompts/financial_assistant_system.txt?raw";
 
-const CONTEXT_PREFIX =
-  "The following JSON is the ONLY source of truth for the user’s LedgerLens data for this turn. Answer using it. If the snapshot is empty or missing fields, say so.\n\n";
-
-/** Max user↔assistant pairs kept in API context (older turns dropped; latest snapshot always in new user message). */
+/** Max user↔assistant pairs kept in API context (older turns dropped; each send includes fresh filters + tools). */
 const CONTEXT_PAIRS = 4;
 
 function displayUserPayload(full: string): string {
@@ -37,7 +39,7 @@ function displayUserPayload(full: string): string {
 }
 
 export function FinancialChat() {
-  const { filtered, analytics, filters } = useFinance();
+  const { processed, filtered, analytics, filters } = useFinance();
   const [open, setOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -45,7 +47,7 @@ export function FinancialChat() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [streamingText, setStreamingText] = useState<string | null>(null);
+  const [toolStatus, setToolStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -102,7 +104,6 @@ export function FinancialChat() {
     setActiveId(id);
     setThread(s.thread);
     setError(null);
-    setStreamingText(null);
   };
 
   const newChat = () => {
@@ -123,7 +124,6 @@ export function FinancialChat() {
     setActiveId(id);
     setThread([]);
     setError(null);
-    setStreamingText(null);
   };
 
   const deleteSession = (id: string, e: MouseEvent) => {
@@ -154,7 +154,7 @@ export function FinancialChat() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [thread, open, loading, streamingText, fullscreen]);
+  }, [thread, open, loading, toolStatus, fullscreen]);
 
   const stop = () => {
     abortRef.current?.abort();
@@ -172,18 +172,20 @@ export function FinancialChat() {
     setError(null);
     setInput("");
     setLoading(true);
-    setStreamingText("");
+    setToolStatus("Connecting…");
 
-    const snapshot = buildFinancialSnapshot(filtered, analytics, filters);
-    const json = snapshotToJson(snapshot);
-    const userBlock = `${CONTEXT_PREFIX}${json}\n\n---\n\nUser question:\n${q}`;
+    const userBlock = `Active dashboard filters (the app already limits data to this window):\n${formatLedgerFiltersSummary(filters)}\n\nFilters (JSON):\n${JSON.stringify(filters)}\n\nUser question:\n${q}`;
     const userMsg: ChatMessage = { role: "user", content: userBlock };
 
     const contextThread = sliceThreadForContext(thread, CONTEXT_PAIRS);
-    const messages: ChatMessage[] = [
+    const history: ChatApiMessage[] = contextThread.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+    const messages: ChatApiMessage[] = [
       { role: "system", content: systemPromptBase.trim() },
-      ...contextThread,
-      userMsg,
+      ...history,
+      { role: "user", content: userBlock },
     ];
 
     const isFirstUserMessage =
@@ -195,52 +197,48 @@ export function FinancialChat() {
     abortRef.current = new AbortController();
     const signal = abortRef.current.signal;
 
-    let acc = "";
+    const ctx = { processed, filtered, analytics, filters };
 
     try {
-      acc = await streamChatCompletion(
-        messages,
+      const reply = await runChatWithToolLoop(
         apiKey,
-        (chunk) => {
-          acc += chunk;
-          setStreamingText(acc);
+        messages,
+        FINANCE_TOOLS,
+        (name, argsJson) => executeFinanceTool(ctx, name, argsJson),
+        {
+          signal,
+          onToolRound: ({ round, toolNames }) => {
+            setToolStatus(
+              `Running ledger tools (step ${round}): ${toolNames.join(", ")}`,
+            );
+          },
         },
-        signal,
       );
 
-      setStreamingText(null);
+      setToolStatus(null);
       setThread((prev) => {
-        const next = [...prev, { role: "assistant", content: acc }];
+        const next = [...prev, { role: "assistant", content: reply }];
         persistActive(next, firstTitle);
         return next;
       });
     } catch (e) {
-      setStreamingText(null);
+      setToolStatus(null);
       if (e instanceof Error && e.name === "AbortError") {
-        if (acc.trim()) {
-          setThread((prev) => {
-            const next = [
-              ...prev,
-              { role: "assistant", content: `${acc}\n\n_(stopped)_` },
-            ];
-            persistActive(next, firstTitle);
-            return next;
-          });
-        }
+        /* user hit Stop — no assistant message */
       } else {
         const msg = e instanceof Error ? e.message : "Something went wrong.";
         setError(msg);
       }
     } finally {
       setLoading(false);
+      setToolStatus(null);
       abortRef.current = null;
     }
-  }, [input, loading, apiKey, filtered, analytics, filters, thread, persistActive]);
+  }, [input, loading, apiKey, processed, filtered, analytics, filters, thread, persistActive]);
 
   const clearThread = () => {
     setThread([]);
     setError(null);
-    setStreamingText(null);
     persistActive([]);
   };
 
@@ -255,7 +253,7 @@ export function FinancialChat() {
 
   const panelClass = fullscreen
     ? "relative z-10 flex h-full w-full max-w-none flex-col overflow-hidden bg-white shadow-2xl sm:flex-row"
-    : "relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl";
+    : "relative z-10 flex max-h-[90vh] w-[min(100%,80vw)] min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl";
 
   return (
     <>
@@ -334,7 +332,7 @@ export function FinancialChat() {
                 ))}
               </div>
               <p className="border-t border-slate-200 px-3 py-2 text-[10px] leading-snug text-slate-500">
-                Context window: last {CONTEXT_PAIRS} exchanges + fresh data snapshot each send.
+                Context: last {CONTEXT_PAIRS} exchanges; each send includes current filters + ledger tools.
               </p>
             </aside>
 
@@ -354,7 +352,7 @@ export function FinancialChat() {
                     LedgerLens assistant
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Streaming · markdown · GPT-4o-mini ·{" "}
+                    Tool calling · markdown · GPT-4o-mini ·{" "}
                     {fullscreen ? "Full screen" : "Compact"}
                   </p>
                 </div>
@@ -391,12 +389,12 @@ export function FinancialChat() {
               )}
 
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
-                {thread.length === 0 && !streamingText && (
+                {thread.length === 0 && !loading && (
                   <p className="text-sm text-slate-600">
-                    Ask about spending, income, or trends. Off-topic questions are declined. Each
-                    message sends a fresh data snapshot and streams the reply. Use{" "}
-                    <strong>full screen</strong> for more space; sessions are saved in this
-                    browser.
+                    Ask about spending, income, or trends. The assistant runs <strong>ledger tools</strong>{" "}
+                    (like ChatGPT function calling) so totals and counts come from your actual filtered
+                    data—not guesses. Set the right <strong>date range</strong> in the dashboard first.
+                    Sessions are saved in this browser.
                   </p>
                 )}
                 {thread.map((m, i) => (
@@ -418,14 +416,10 @@ export function FinancialChat() {
                     )}
                   </div>
                 ))}
-                {streamingText !== null && (
-                  <div className="mr-4 rounded-2xl border border-emerald-200/80 bg-white px-4 py-3 shadow-sm">
-                    <ChatMarkdown content={streamingText} />
-                    <span className="mt-1 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                  </div>
-                )}
-                {loading && streamingText === null && (
-                  <p className="text-xs text-slate-500">Connecting…</p>
+                {loading && (
+                  <p className="text-xs text-slate-500">
+                    {toolStatus ?? "Working…"}
+                  </p>
                 )}
                 {error && !loading && (
                   <p className="text-xs text-rose-600">{error}</p>

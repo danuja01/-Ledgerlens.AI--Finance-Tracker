@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export workbooks from data/ to src/data/*.json (see data/ next to this package)."""
+"""Export final_subcategory_mapping.xlsx and 2026-04-19.xlsx to client JSON."""
 
 from __future__ import annotations
 
@@ -16,17 +16,11 @@ except ImportError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT_JSON = ROOT / "src" / "data"
-# Source workbooks live next to the app (commit or gitignore as you prefer)
-SOURCE = ROOT / "data"
+DATA = ROOT / "src" / "data"
+REPO_ROOT = ROOT.parent
 
-MAPPING_XLSX = SOURCE / "final_subcategory_mapping.xlsx"
-# Prefer a stable name; fall back to a dated export if present
-_TX_CANDIDATES = (
-    SOURCE / "transactions.xlsx",
-    SOURCE / "2026-04-19.xlsx",
-)
-TX_XLSX = next((p for p in _TX_CANDIDATES if p.exists()), _TX_CANDIDATES[0])
+MAPPING_XLSX = REPO_ROOT / "final_subcategory_mapping.xlsx"
+TX_XLSX = REPO_ROOT / "2026-04-19.xlsx"
 
 # Display names from build prompt + fallbacks from mapping keys
 DISPLAY_NAME_OVERRIDES: dict[str, str] = {
@@ -170,21 +164,9 @@ def export_transactions() -> list[dict]:
 
 
 def main() -> None:
-    OUT_JSON.mkdir(parents=True, exist_ok=True)
-    SOURCE.mkdir(parents=True, exist_ok=True)
-    if not MAPPING_XLSX.is_file():
-        print(f"Missing mapping workbook: {MAPPING_XLSX}", file=sys.stderr)
-        sys.exit(1)
-    if not TX_XLSX.is_file():
-        print(
-            f"Missing transactions workbook. Place one of:\n"
-            f"  {SOURCE / 'transactions.xlsx'}\n"
-            f"  {SOURCE / '2026-04-19.xlsx'}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    mapping_path = OUT_JSON / "categoryMapping.json"
-    tx_path = OUT_JSON / "transactions.json"
+    DATA.mkdir(parents=True, exist_ok=True)
+    mapping_path = DATA / "categoryMapping.json"
+    tx_path = DATA / "transactions.json"
     mapping = export_mapping()
     with mapping_path.open("w", encoding="utf-8") as f:
         json.dump(mapping, f, ensure_ascii=False, indent=2)

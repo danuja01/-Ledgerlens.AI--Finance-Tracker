@@ -12,6 +12,23 @@ export type ChatMessage = {
   content: string;
 };
 
+/** OpenAI Chat Completions message shape (includes tool calls). */
+export type ToolCallChunk = {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+};
+
+export type ChatApiMessage =
+  | { role: "system"; content: string }
+  | { role: "user"; content: string }
+  | {
+      role: "assistant";
+      content: string | null;
+      tool_calls?: ToolCallChunk[];
+    }
+  | { role: "tool"; tool_call_id: string; content: string };
+
 export async function sendChatCompletion(
   messages: ChatMessage[],
   apiKey: string,
@@ -23,10 +40,10 @@ export async function sendChatCompletion(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-5.4-mini",
       messages,
       temperature: 0.35,
-      max_tokens: 2500,
+      max_completion_tokens: 2500,
     }),
   });
 
@@ -71,10 +88,10 @@ export async function streamChatCompletion(
     },
     signal,
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-5.4-mini",
       messages,
       temperature: 0.35,
-      max_tokens: 2500,
+      max_completion_tokens: 2500,
       stream: true,
     }),
   });
