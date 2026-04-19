@@ -89,7 +89,7 @@ function mergeSalaryCycles(
   };
 }
 
-function describeTimeScope(
+export function describeTimeScope(
   ts: TimeScopeArg,
   base: FinanceFilters,
 ): string {
@@ -379,4 +379,56 @@ export function subcategoryRollupForScope(
   const limit = Math.min(120, Math.max(1, options.limit ?? 50));
   rollup = rollup.slice(0, limit);
   return { ok: true, rows: rollup };
+}
+
+export type ExpenseChartGroupBy = "display_category" | "subcategory";
+
+/**
+ * Aggregate cashflow expenses for pie/bar charts; merges tail into "Other".
+ */
+export function buildExpenseChartAggregation(
+  processed: ProcessedTransaction[],
+  baseFilters: FinanceFilters,
+  dashboardFiltered: ProcessedTransaction[],
+  timeScope: TimeScopeArg,
+  options: { groupBy: ExpenseChartGroupBy; topN: number },
+): {
+  segments: { name: string; value: number }[];
+  totalExpense: number;
+} {
+  let rows = rowsForTimeScope(
+    processed,
+    baseFilters,
+    dashboardFiltered,
+    timeScope,
+  );
+  rows = rows.filter(
+    (t) => t.direction === "expense" && countsForCashflow(t),
+  );
+
+  const map = new Map<string, number>();
+  for (const t of rows) {
+    const key =
+      options.groupBy === "display_category"
+        ? t.displayCategory
+        : `${t.displayCategory} › ${t.subCategory}`;
+    map.set(key, (map.get(key) ?? 0) + t.amount);
+  }
+
+  const arr = [...map.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const totalExpense = arr.reduce((s, x) => s + x.value, 0);
+  const topN = Math.max(3, Math.min(25, options.topN));
+
+  if (arr.length <= topN) {
+    return { segments: arr, totalExpense };
+  }
+
+  const head = arr.slice(0, topN - 1);
+  const rest = arr.slice(topN - 1);
+  const otherVal = rest.reduce((s, x) => s + x.value, 0);
+  const segments = [...head, { name: "Other", value: otherVal }];
+  return { segments, totalExpense };
 }

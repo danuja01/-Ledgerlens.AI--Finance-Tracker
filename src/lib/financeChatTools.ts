@@ -1,8 +1,11 @@
 import { countsForCashflow } from "@/lib/finance";
 import type { Analytics, FinanceFilters, ProcessedTransaction } from "@/types";
 import {
+  buildExpenseChartAggregation,
+  describeTimeScope,
   queryLedger,
   subcategoryRollupForScope,
+  type ExpenseChartGroupBy,
   type LedgerDimensions,
   type TimeScopeArg,
 } from "@/lib/ledgerQueryEngine";
@@ -163,6 +166,41 @@ export const FINANCE_TOOLS: unknown[] = [
             description: "Optional: restrict to these display categories (OR)",
           },
           limit: { type: "number", description: "Max sub-category rows (default 50)" },
+        },
+        required: ["timeScope"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "build_expense_chart",
+      description:
+        "Prepare data for an **inline expense chart** (pie or bar) in the chat UI. Call this when the user asks to visualize, chart, graph, or see a breakdown of spending (e.g. pie chart Jan–Apr 2026). Use the same timeScope rules as query_ledger. Returns segment totals for the assistant to summarize; the app renders the chart automatically.",
+      parameters: {
+        type: "object",
+        properties: {
+          timeScope: TIME_SCOPE_SCHEMA,
+          groupBy: {
+            type: "string",
+            enum: ["display_category", "subcategory"],
+            description:
+              "display_category = one slice per main category; subcategory = finer slices (Category › Sub).",
+          },
+          chartKind: {
+            type: "string",
+            enum: ["pie", "bar", "auto"],
+            description:
+              "auto = pie if not too many segments, else horizontal bar. Prefer pie when user asks for pie chart.",
+          },
+          topN: {
+            type: "number",
+            description: "Max segments before merging rest into Other (default 12, max 25)",
+          },
+          title: {
+            type: "string",
+            description: "Short chart title, e.g. Expenses by category (Jan–Apr 2026)",
+          },
         },
         required: ["timeScope"],
       },
@@ -341,6 +379,53 @@ export function executeFinanceTool(
         currency: "LKR",
         rows: result.rows,
         rowCount: result.rows.length,
+      };
+    }
+    case "build_expense_chart": {
+      const ts = parseTimeScope(args.timeScope);
+      if ("error" in ts) return { error: ts.error };
+      const groupBy = (args.groupBy === "subcategory"
+        ? "subcategory"
+        : "display_category") as ExpenseChartGroupBy;
+      const topN = Math.min(
+        25,
+        Math.max(3, Number(args.topN) || 12),
+      );
+      const { segments, totalExpense } = buildExpenseChartAggregation(
+        ctx.processed,
+        ctx.filters,
+        ctx.filtered,
+        ts,
+        { groupBy, topN },
+      );
+      const chartKindArg = String(args.chartKind ?? "auto");
+      const chartKind =
+        chartKindArg === "pie"
+          ? "pie"
+          : chartKindArg === "bar"
+            ? "bar"
+            : segments.length <= 14
+              ? "pie"
+              : "bar";
+      const periodLabel = describeTimeScope(ts, ctx.filters);
+      const defaultTitle =
+        groupBy === "display_category"
+          ? "Expenses by category"
+          : "Expenses by sub-category";
+      const title =
+        typeof args.title === "string" && args.title.trim()
+          ? args.title.trim()
+          : defaultTitle;
+      return {
+        _widget: "expense_chart",
+        title,
+        subtitle: `${periodLabel} · Total ${Math.round(totalExpense).toLocaleString()} LKR (cashflow expenses)`,
+        chartKind,
+        currency: "LKR",
+        segments,
+        totalExpense,
+        segmentCount: segments.length,
+        hint: "Summarize these figures in your reply; the user also sees an interactive chart in the chat.",
       };
     }
     default:

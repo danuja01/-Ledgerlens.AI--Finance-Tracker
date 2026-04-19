@@ -1,4 +1,5 @@
-import type { ChatApiMessage, ToolCallChunk } from "@/lib/openaiChat";
+import { chartSpecFromExpenseToolResult } from "@/lib/chatCharts";
+import type { ChatApiMessage, ChatChartSpec, ToolCallChunk } from "@/lib/openaiChat";
 
 const CHAT_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -89,9 +90,10 @@ export async function runChatWithToolLoop(
     signal?: AbortSignal;
     onToolRound?: (info: { round: number; toolNames: string[] }) => void;
   } = {},
-): Promise<string> {
+): Promise<{ reply: string; charts: ChatChartSpec[] }> {
   const maxIterations = options.maxIterations ?? 10;
   const messages: ChatApiMessage[] = [...initialMessages];
+  const charts: ChatChartSpec[] = [];
 
   for (let i = 0; i < maxIterations; i++) {
     const { finish_reason, message } = await chatCompletionNonStream(
@@ -117,6 +119,8 @@ export async function runChatWithToolLoop(
         const name = tc.function.name;
         const argsJson = tc.function.arguments ?? "{}";
         const result = executeTool(name, argsJson);
+        const spec = chartSpecFromExpenseToolResult(result);
+        if (spec) charts.push(spec);
         messages.push({
           role: "tool",
           tool_call_id: tc.id,
@@ -127,7 +131,7 @@ export async function runChatWithToolLoop(
     }
 
     if (message.content?.trim()) {
-      return message.content;
+      return { reply: message.content, charts };
     }
 
     if (finish_reason === "length") {

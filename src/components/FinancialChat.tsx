@@ -1,3 +1,4 @@
+import { ChatChartWidget } from "@/components/ChatChartWidget";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { useFinance } from "@/context/FinanceContext";
 import { sliceThreadForContext } from "@/lib/chatContextWindow";
@@ -200,7 +201,7 @@ export function FinancialChat() {
     const ctx = { processed, filtered, analytics, filters };
 
     try {
-      const reply = await runChatWithToolLoop(
+      const { reply, charts } = await runChatWithToolLoop(
         apiKey,
         messages,
         FINANCE_TOOLS,
@@ -217,7 +218,14 @@ export function FinancialChat() {
 
       setToolStatus(null);
       setThread((prev) => {
-        const next = [...prev, { role: "assistant", content: reply }];
+        const next: ChatMessage[] = [
+          ...prev,
+          {
+            role: "assistant",
+            content: reply,
+            ...(charts.length > 0 ? { charts } : {}),
+          },
+        ];
         persistActive(next, firstTitle);
         return next;
       });
@@ -391,29 +399,36 @@ export function FinancialChat() {
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
                 {thread.length === 0 && !loading && (
                   <p className="text-sm text-slate-600">
-                    Ask about spending, income, or trends. The assistant runs <strong>ledger tools</strong>{" "}
-                    (like ChatGPT function calling) so totals and counts come from your actual filtered
-                    data—not guesses. Set the right <strong>date range</strong> in the dashboard first.
-                    Sessions are saved in this browser.
+                    Ask about spending, income, trends, or <strong>charts</strong> (e.g. “expense pie chart
+                    Jan–Apr 2026”). The assistant uses <strong>ledger tools</strong> so numbers and graphs
+                    match your data. For periods in chat, name the range in your question or align dashboard
+                    filters. Sessions are saved in this browser.
                   </p>
                 )}
                 {thread.map((m, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "rounded-2xl px-4 py-3",
-                      m.role === "user"
-                        ? "ml-6 bg-slate-100 text-slate-900"
-                        : "mr-4 border border-emerald-100/80 bg-emerald-50/50",
-                    )}
-                  >
-                    {m.role === "user" ? (
-                      <p className="whitespace-pre-wrap break-words text-sm">
-                        {displayUserPayload(m.content)}
-                      </p>
-                    ) : (
-                      <ChatMarkdown content={m.content} />
-                    )}
+                  <div key={i} className="space-y-2">
+                    <div
+                      className={cn(
+                        "rounded-2xl px-4 py-3",
+                        m.role === "user"
+                          ? "ml-6 bg-slate-100 text-slate-900"
+                          : "mr-4 border border-emerald-100/80 bg-emerald-50/50",
+                      )}
+                    >
+                      {m.role === "user" ? (
+                        <p className="whitespace-pre-wrap break-words text-sm">
+                          {displayUserPayload(m.content)}
+                        </p>
+                      ) : (
+                        <ChatMarkdown content={m.content} />
+                      )}
+                    </div>
+                    {m.role === "assistant" &&
+                      m.charts?.map((c) => (
+                        <div key={c.id} className="mr-4">
+                          <ChatChartWidget spec={c} />
+                        </div>
+                      ))}
                   </div>
                 ))}
                 {loading && (

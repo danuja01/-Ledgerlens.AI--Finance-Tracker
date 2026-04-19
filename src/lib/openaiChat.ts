@@ -7,9 +7,21 @@ export function getOpenAiApiKey(): string | undefined {
   return k || undefined;
 }
 
+/** Inline chart widget (pie / bar) attached to an assistant message — similar to rich widgets in Claude/ChatGPT. */
+export type ChatChartSpec = {
+  id: string;
+  kind: "pie" | "bar";
+  title: string;
+  subtitle?: string;
+  currency: string;
+  data: { name: string; value: number }[];
+};
+
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
+  /** Rendered below the assistant markdown when present (e.g. expense charts). */
+  charts?: ChatChartSpec[];
 };
 
 /** OpenAI Chat Completions message shape (includes tool calls). */
